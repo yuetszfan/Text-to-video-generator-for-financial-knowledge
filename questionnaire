@@ -11,6 +11,7 @@ recommendations = {
     "yes": "You are experienced with investments. We recommend exploring diverse portfolios.",
     "no": "You may need guidance. Consider starting with low-risk products like US bonds.",
     "long": "Long-term investments offer stability. Mutual funds could be a good choice.",
+    "medium": "Medium-term investments balance risk and return. Consider conservative stock options or balanced funds",
     "short": "Short-term investments may suit your goals. Consider money-market funds."
 }
 
@@ -18,11 +19,12 @@ def process_responses(responses):
     return " ".join(recommendations.get(answer, "No recommendation available for this input.") for answer in responses)
 
 def start_questionnaire(on_complete):
+    """Starts the questionnaire and passes the generated script to the callback."""
     responses = []
 
     def submit():
         user_input = entry.get().strip().lower()
-        if user_input not in ["yes", "no", "long", "short"]:
+        if user_input not in ["yes", "no", "long", "medium", "short"]:
             messagebox.showerror("Invalid Input", "Please answer with yes, no, long, medium, or short.")
         else:
             responses.append(user_input)
@@ -30,9 +32,10 @@ def start_questionnaire(on_complete):
                 question_label.config(text=questions[len(responses)])
                 entry.delete(0, tk.END)
             else:
-                messagebox.showinfo("Thank You", "Questionnaire completed.")
                 root.destroy()
-                on_complete(process_responses(responses))
+                # Process responses into a script
+                script = " ".join(recommendations.get(answer, "No recommendation available.") for answer in responses)
+                on_complete(script)
 
     root = tk.Tk()
     root.title("Financial Knowledge Questionnaire")
