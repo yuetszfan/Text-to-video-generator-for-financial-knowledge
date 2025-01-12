@@ -1,0 +1,45 @@
+import os
+import requests
+from moviepy.editor import VideoFileClip, concatenate_videoclips, TextClip, CompositeVideoClip, AudioFileClip
+
+PEXELS_API_KEY = "YOUR_PEXELS_API_KEY"
+PEXELS_VIDEO_API_URL = "https://api.pexels.com/videos/search"
+
+def fetch_videos(keywords, max_results=3):
+    headers = {"Authorization": PEXELS_API_KEY}
+    params = {"query": keywords, "per_page": max_results}
+    response = requests.get(PEXELS_VIDEO_API_URL, headers=headers, params=params)
+    response.raise_for_status()
+    videos = response.json().get("videos", [])
+    return [video["video_files"][0]["link"] for video in videos]
+
+def download_video(url, output_path):
+    response = requests.get(url, stream=True)
+    with open(output_path, "wb") as f:
+        for chunk in response.iter_content(chunk_size=1024):
+            f.write(chunk)
+
+def create_video_script(video_urls, script, audio_file_path, output_path):
+    clips = []
+    for i, url in enumerate(video_urls):
+        video_path = f"temp_video_{i}.mp4"
+        download_video(url, video_path)
+        clip = VideoFileClip(video_path).subclip(0, min(5, VideoFileClip(video_path).duration))
+        caption = TextClip(script[i], fontsize=24, color="white", bg_color="black", size=(clip.w, 50))
+        caption = caption.set_position(("center", "bottom")).set_duration(clip.duration)
+        clips.append(CompositeVideoClip([clip, caption]))
+    final_clip = concatenate_videoclips(clips, method="compose")
+    audio = AudioFileClip(audio_file_path).subclip(0, final_clip.duration)
+    final_clip = final_clip.set_audio(audio)
+    final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac")
+    for i in range(len(video_urls)):
+        os.remove(f"temp_video_{i}.mp4")
+
+def generate_video(script, audio_file_path, output_path):
+    keywords = "finance investment savings"
+    try:
+        video_urls = fetch_videos(keywords)
+        create_video_script(video_urls, script.split(". "), audio_file_path, output_path)
+        return f"Video generated successfully: {output_path}"
+    except Exception as e:
+        return f"Error generating video: {e}"
