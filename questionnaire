@@ -1,0 +1,49 @@
+import tkinter as tk
+from tkinter import messagebox
+
+questions = [
+    "Do you have experience with investments? (yes/no)",
+    "Are you comfortable with financial products that carry more than 20% risk? (yes/no)",
+    "Do you prefer long-term (more than 5 years), medium-term(between 1 years to 5 years) or short-term investments(within 1 year)? (long/medium/short)"
+]
+
+recommendations = {
+    "yes": "You are experienced with investments. We recommend exploring diverse portfolios.",
+    "no": "You may need guidance. Consider starting with low-risk products like US bonds.",
+    "long": "Long-term investments offer stability. Mutual funds could be a good choice.",
+    "short": "Short-term investments may suit your goals. Consider money-market funds."
+}
+
+def process_responses(responses):
+    return " ".join(recommendations.get(answer, "No recommendation available for this input.") for answer in responses)
+
+def start_questionnaire(on_complete):
+    responses = []
+
+    def submit():
+        user_input = entry.get().strip().lower()
+        if user_input not in ["yes", "no", "long", "short"]:
+            messagebox.showerror("Invalid Input", "Please answer with yes, no, long, medium, or short.")
+        else:
+            responses.append(user_input)
+            if len(responses) < len(questions):
+                question_label.config(text=questions[len(responses)])
+                entry.delete(0, tk.END)
+            else:
+                messagebox.showinfo("Thank You", "Questionnaire completed.")
+                root.destroy()
+                on_complete(process_responses(responses))
+
+    root = tk.Tk()
+    root.title("Financial Knowledge Questionnaire")
+
+    question_label = tk.Label(root, text=questions[0], wraplength=400)
+    question_label.pack(pady=10)
+
+    entry = tk.Entry(root, width=50)
+    entry.pack(pady=5)
+
+    submit_button = tk.Button(root, text="Submit", command=submit)
+    submit_button.pack(pady=10)
+
+    root.mainloop()
